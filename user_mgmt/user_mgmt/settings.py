@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -129,3 +130,8 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 # After login, redirect users to homepage
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = 'login'
+
+# Adding settings to serve files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+

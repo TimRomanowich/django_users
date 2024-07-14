@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.views import View
 from django.contrib.auth.views import LoginView
 from .forms import RegisterForm, LoginForm
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def home(request):
@@ -54,3 +55,8 @@ class RegisterView(View):
             return redirect(to='login')
 
         return render(request, self.template_name, {'form': form})
+
+# Limits access to logged in users
+@login_required
+def profile(request):
+    return render(request, 'users/profile.html')
