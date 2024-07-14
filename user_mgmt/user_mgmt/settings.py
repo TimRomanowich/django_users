@@ -122,3 +122,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Added to set cookie expiration for 30 days
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
+
+# After login, redirect users to homepage
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = 'login'
