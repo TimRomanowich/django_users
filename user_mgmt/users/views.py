@@ -4,6 +4,8 @@ from django.views import View
 from django.contrib.auth.views import LoginView
 from .forms import RegisterForm, LoginForm
 from django.contrib.auth.decorators import login_required
+from .middleware import get_online_users
+from django.http import JsonResponse
 
 # Create your views here.
 def home(request):
@@ -55,6 +57,15 @@ class RegisterView(View):
             return redirect(to='login')
 
         return render(request, self.template_name, {'form': form})
+
+def online_users_api(request):
+    online_users = get_online_users()
+    data = [{'username': user.username, 'last_activity': user.last_activity} for user in online_users]
+    return JsonResponse(data, safe=False)
+
+def online_users_list(request):
+    online_users = get_online_users()
+    return render(request, 'users/online_users.html', {'online_users': online_users})
 
 # Limits access to logged in users
 @login_required
