@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
 from django.contrib.auth.views import LoginView
@@ -6,6 +6,11 @@ from .forms import RegisterForm, LoginForm
 from django.contrib.auth.decorators import login_required
 from .middleware import get_online_users
 from django.http import JsonResponse
+from django.contrib.auth.models import User
+from django.urls import reverse
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from .serializers import UserRegistrationSerializer
 
 # Create your views here.
 def home(request):
@@ -57,7 +62,10 @@ class RegisterView(View):
             return redirect(to='login')
 
         return render(request, self.template_name, {'form': form})
-
+class RegisterUserAPIView(generics.CreateAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = UserRegistrationSerializer
+    
 def online_users_api(request):
     online_users = get_online_users()
     data = [{'username': user.username, 'last_activity': user.last_activity} for user in online_users]
@@ -67,7 +75,17 @@ def online_users_list(request):
     online_users = get_online_users()
     return render(request, 'users/online_users.html', {'online_users': online_users})
 
+def all_users_api(request):
+    users = User.objects.all()
+    data = [{
+        'username': user.username,
+        'email': user.email,
+        'profile_url': request.build_absolute_uri(reverse('users-profile', kwargs={'username': user.username}))
+    } for user in users]
+    return JsonResponse(data, safe=False)
+
 # Limits access to logged in users
 @login_required
-def profile(request):
-    return render(request, 'users/profile.html')
+def profile(request, username):
+    user = get_object_or_404(User, username=username)
+    return render(request, 'users/profile.html', {'profile_user': user})
