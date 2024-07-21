@@ -2,20 +2,50 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
 from django.contrib.auth.views import LoginView
+from django.contrib.auth import logout
 from .forms import RegisterForm, LoginForm
+from .models import Profile
 from django.contrib.auth.decorators import login_required
 from .middleware import get_online_users
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework import generics
-from rest_framework.permissions import AllowAny
-from .serializers import UserRegistrationSerializer
+from rest_framework import generics, permissions, status
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import UserRegistrationSerializer, ProfileSerializer, DeleteUserSerializer
 
 # Create your views here.
 def home(request):
     return render(request, 'users/home.html')
 
+
+class DeleteUserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = DeleteUserSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            # Logout the user
+            logout(request)
+            # Delete the user
+            user.delete()
+            return Response({"detail": "User account has been successfully deleted."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class EditProfileAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_object(self):
+        return self.request.user.profile
+
+    def perform_update(self, serializer):
+        serializer.save()
 
 # Class based view that extends from the built in login view to add a remember me functionality
 class CustomLoginView(LoginView):

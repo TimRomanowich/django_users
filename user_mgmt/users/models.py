@@ -8,9 +8,9 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     avatar = models.ImageField(default='default.jpg', upload_to='profile_images')
-    bio = models.TextField()
+    bio = models.TextField(blank=True)
 
     def __str__(self):
-        return self.user.username
+        return f'{self.user.username} Profile'
 
 User.add_to_class('last_activity', models.DateTimeField(default=timezone.now))
