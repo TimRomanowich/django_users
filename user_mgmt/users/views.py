@@ -2,11 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
 from django.contrib.auth.views import LoginView
-from django.contrib.auth import logout
-from .forms import RegisterForm, LoginForm
-from .models import Profile
+from django.contrib.auth import login, logout, authenticate
+
 from django.contrib.auth.decorators import login_required
-from .middleware import get_online_users
+
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -15,7 +14,12 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserRegistrationSerializer, ProfileSerializer, DeleteUserSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .middleware import get_online_users
+from .forms import RegisterForm, LoginForm
+from .models import Profile
+from .serializers import UserRegistrationSerializer, ProfileSerializer, DeleteUserSerializer, LoginSerializer
 
 # Create your views here.
 def home(request):
@@ -46,7 +50,69 @@ class EditProfileAPIView(generics.RetrieveUpdateAPIView):
 
     def perform_update(self, serializer):
         serializer.save()
+class LoginView(APIView):
+    serializer_class = LoginSerializer
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                login(request, user)
+                return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get(self, request):
+        return Response({'message': 'Please send a POST request to login'})
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+        return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        return Response({'message': 'Click the POST button to logout'})
+    
+"""
+#Login View using JWT 
+class LoginView(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = authenticate(
+                username=serializer.validated_data['username'],
+                password=serializer.validated_data['password']
+            )
+            if user:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_200_OK)
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+"""
+"""
+#Logout view using JWT
+class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+"""
+            
+"""
 # Class based view that extends from the built in login view to add a remember me functionality
 class CustomLoginView(LoginView):
     form_class = LoginForm
@@ -63,6 +129,8 @@ class CustomLoginView(LoginView):
 
         # else browser session will be as long as the session cookie time "SESSION_COOKIE_AGE" defined in settings.py
         return super(CustomLoginView, self).form_valid(form)
+"""
+        
 class RegisterView(View):
     form_class = RegisterForm
     initial = {'key': 'value'}

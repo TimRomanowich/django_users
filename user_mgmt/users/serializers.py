@@ -4,12 +4,19 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import Profile
 
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(max_length=128, write_only=True)
+
+class LogoutSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name')
         read_only_fields = ('username',)
+        
 class DeleteUserSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
 
