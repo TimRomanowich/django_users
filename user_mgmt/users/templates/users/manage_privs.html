@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post">
+    {% csrf_token %}
+    <fieldset>
+        <div>
+            <input type="checkbox" id="can_post" name="can_post" {% if chat_privilege.can_post %}checked{% endif %}>
+            <label for="can_post">Can Post</label>
+        </div>
+        <div>
+            <input type="checkbox" id="can_read" name="can_read" {% if chat_privilege.can_read %}checked{% endif %}>
+            <label for="can_read">Can Read</label>
+        </div>
+        <div>
+            <input type="checkbox" id="can_post_media" name="can_post_media" {% if chat_privilege.can_post_media %}checked{% endif %}>
+            <label for="can_post_media">Can Post Media</label>
+        </div>
+    </fieldset>
+    <input type="submit" value="Update Privileges">
+</form>
+{% endblock %}

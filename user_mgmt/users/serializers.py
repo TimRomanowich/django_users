@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import Profile
+from .models import Profile, ChatPrivilege
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
@@ -10,7 +10,12 @@ class LoginSerializer(serializers.Serializer):
 
 class LogoutSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
+class ChatPrivilegeSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
 
+    class Meta:
+        model = ChatPrivilege
+        fields = ['username', 'can_post', 'can_read', 'can_post_media']
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

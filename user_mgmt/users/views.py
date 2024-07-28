@@ -4,12 +4,12 @@ from django.views import View
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login, logout, authenticate
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -18,13 +18,34 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .middleware import get_online_users
 from .forms import RegisterForm, LoginForm
-from .models import Profile
-from .serializers import UserRegistrationSerializer, ProfileSerializer, DeleteUserSerializer, LoginSerializer
+from .models import Profile, ChatPrivilege
+from .serializers import UserRegistrationSerializer, ProfileSerializer, DeleteUserSerializer, LoginSerializer, ChatPrivilegeSerializer
 
 # Create your views here.
 def home(request):
     return render(request, 'users/home.html')
+def is_admin(user):
+    return user.is_authenticated and user.is_staff
 
+@user_passes_test(is_admin)
+def manage_privileges_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    chat_privilege, created = ChatPrivilege.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        can_post = 'can_post' in request.POST
+        can_read = 'can_read' in request.POST
+        can_post_media = 'can_post_media' in request.POST
+
+        chat_privilege.update_privileges(can_post=can_post, can_read=can_read, can_post_media=can_post_media)
+        messages.success(request, f"Privileges updated for {user.username}")
+        return redirect('admin:users_chatprivilege_changelist')
+
+    context = {
+        'title': f"Manage Privileges for {user.username}",
+        'chat_privilege': chat_privilege,
+    }
+    return render(request, 'admin/manage_privileges.html', context)
 
 class DeleteUserAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -182,8 +203,26 @@ def all_users_api(request):
     } for user in users]
     return JsonResponse(data, safe=False)
 
+class ChatPrivilegeViewSet(viewsets.ModelViewSet):
+    queryset = ChatPrivilege.objects.all()
+    serializer_class = ChatPrivilegeSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class UserChatPrivilegeView(generics.RetrieveUpdateAPIView):
+    serializer_class = ChatPrivilegeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return ChatPrivilege.objects.get_or_create(user=self.request.user)[0]
+    
 # Limits access to logged in users
 @login_required
 def profile(request, username):
     user = get_object_or_404(User, username=username)
     return render(request, 'users/profile.html', {'profile_user': user})
+
+
+
