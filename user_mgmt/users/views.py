@@ -1,13 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
+
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 from django.http import JsonResponse
-from django.contrib.auth.models import User
+
 from django.urls import reverse
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -47,6 +49,28 @@ def manage_privileges_view(request, user_id):
     }
     return render(request, 'admin/manage_privileges.html', context)
 
+@user_passes_test(is_admin)
+def update_user_privilege(request, user_id):
+    if request.method == 'POST':
+        user = User.objects.get(id=user_id)
+        chat_privilege, created = ChatPrivilege.objects.get_or_create(user=user)
+        chat_privilege.can_post = 'can_post' in request.POST
+        chat_privilege.can_read = 'can_read' in request.POST
+        chat_privilege.can_post_media = 'can_post_media' in request.POST
+        chat_privilege.save()
+    return redirect('manage_all_privileges')
+
+@user_passes_test(is_admin)
+def manage_all_privileges_view(request):
+    users = User.objects.all()
+    chat_privileges = ChatPrivilege.objects.all()
+    user_privileges = {cp.user_id: cp for cp in chat_privileges}
+    
+    context = {
+        'users': users,
+        'user_privileges': user_privileges,
+    }
+    return render(request, 'admin/manage_privs.html', context)
 class DeleteUserAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -223,6 +247,5 @@ class UserChatPrivilegeView(generics.RetrieveUpdateAPIView):
 def profile(request, username):
     user = get_object_or_404(User, username=username)
     return render(request, 'users/profile.html', {'profile_user': user})
-
 
 

@@ -1,0 +1,30 @@
+{% load custom_filters %}
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Manage User Privileges</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Can Post</th>
+            <th>Can Read</th>
+            <th>Can Post Media</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+            <form method="post" action="{% url 'update_user_privilege' user.id %}">
+                {% csrf_token %}
+                <td>{{ user.username }}</td>
+                <td><input type="checkbox" name="can_post" {% if user_privileges|get_item:user.id|get_item:'can_post' %}checked{% endif %}></td>
+                <td><input type="checkbox" name="can_read" {% if user_privileges|get_item:user.id|get_item:'can_read' %}checked{% endif %}></td>
+                <td><input type="checkbox" name="can_post_media" {% if user_privileges|get_item:user.id|get_item:'can_post_media' %}checked{% endif %}></td>
+                <td><input type="submit" value="Update"></td>
+            </form>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

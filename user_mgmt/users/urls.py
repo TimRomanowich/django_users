@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (home, RegisterView, profile, online_users_api, 
                     online_users_list, all_users_api, RegisterUserAPIView, 
                     EditProfileAPIView, DeleteUserAPIView, LoginView, LogoutView,
-                    ChatPrivilegeViewSet, UserChatPrivilegeView, manage_privileges_view)
+                    ChatPrivilegeViewSet, UserChatPrivilegeView, manage_privileges_view, manage_all_privileges_view, update_user_privilege)
 router = DefaultRouter()
 router.register(r'chat-privileges', ChatPrivilegeViewSet)
 
@@ -22,4 +22,6 @@ urlpatterns = [
      path('api/', include(router.urls)),
     path('api/my-chat-privileges/', UserChatPrivilegeView.as_view(), name='my-chat-privileges'),
     path('admin/manage-privileges/<int:user_id>/', manage_privileges_view, name='manage-privileges'),
+    path('admin/manage-privileges/', manage_all_privileges_view, name='manage_all_privileges'),
+    path('admin/update-privilege/<int:user_id>/', update_user_privilege, name='update_user_privilege'),
 ]

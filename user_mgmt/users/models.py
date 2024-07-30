@@ -17,9 +17,9 @@ User.add_to_class('last_activity', models.DateTimeField(default=timezone.now))
 
 class ChatPrivilege(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    can_post = models.BooleanField(default=False)
+    can_post = models.BooleanField(default=True)
     can_read = models.BooleanField(default=True)
-    can_post_media = models.BooleanField(default=False)
+    can_post_media = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.user.username}'s chat privileges"

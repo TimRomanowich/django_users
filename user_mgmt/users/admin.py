@@ -3,6 +3,7 @@ from django.urls import path
 from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Profile, ChatPrivilege
+from .views import manage_all_privileges_view
 
 # Register your models here.
 admin.site.register(Profile)
@@ -22,10 +23,15 @@ class ChatPrivilegeAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('manage_privileges/<int:user_id>/', self.admin_site.admin_view(self.manage_privileges_view), name='manage-privileges'),
+            path('manage-all-privileges/', self.admin_site.admin_view(manage_all_privileges_view), name='manage_all_privileges'),
         ]
         return custom_urls + urls
 
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['manage_all_privileges_url'] = 'admin:manage_all_privileges'
+        return super().changelist_view(request, extra_context=extra_context)
+   
     def manage_privileges(self, request, queryset):
         if len(queryset) == 1:
             return redirect('admin:manage-privileges', user_id=queryset[0].user.id)
