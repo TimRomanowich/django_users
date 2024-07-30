@@ -1,0 +1,16 @@
+{% extends "users/base.html" %}
+{% block title %}Online Users{% endblock title %}
+{% block content %}
+<div class="container">
+    <h2>Currently Online Users</h2>
+    <ul class="list-group">
+        {% for user in online_users %}
+            <li class="list-group-item">
+                {{ user.username }} - Last active: {{ user.last_activity|timesince }} ago
+            </li>
+        {% empty %}
+            <li class="list-group-item">No users currently online</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock content %}
